@@ -22,6 +22,7 @@ import NotificationBadge from "./NotificationBadge";
 import { NotificationState } from "../../../stores/notifications/NotificationState";
 import { ButtonEvent } from "../elements/AccessibleButton";
 import useHover from "../../../hooks/useHover";
+import { EnterChatButton } from "../elements/TransformButton";
 
 interface ExtraTileProps {
     isMinimized: boolean;
@@ -85,10 +86,12 @@ export default function ExtraTile({
         >
             <div className="mx_RoomTile_avatarContainer">{avatar}</div>
             <div className="mx_RoomTile_details">
-                <div className="mx_RoomTile_primaryDetails">
-                    {nameContainer}
-                    <div className="mx_RoomTile_badgeContainer">{badge}</div>
-                </div>
+                <EnterChatButton>
+                    <div className="mx_RoomTile_primaryDetails">
+                        {nameContainer}
+                        <div className="mx_RoomTile_badgeContainer">{badge}</div>
+                    </div>
+                </EnterChatButton>
             </div>
         </Button>
     );

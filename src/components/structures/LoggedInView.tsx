@@ -36,9 +36,10 @@ import dis from "../../dispatcher/dispatcher";
 import { IMatrixClientCreds } from "../../MatrixClientPeg";
 import SettingsStore from "../../settings/SettingsStore";
 import { SettingLevel } from "../../settings/SettingLevel";
-import ResizeHandle from "../views/elements/ResizeHandle";
+// import ResizeHandle from "../views/elements/ResizeHandle";
 import { CollapseDistributor, Resizer } from "../../resizer";
 import MatrixClientContext from "../../contexts/MatrixClientContext";
+import MatrixChatRouteContext from "../../contexts/MatrixChatRouteContext";
 import ResizeNotifier from "../../utils/ResizeNotifier";
 import PlatformPeg from "../../PlatformPeg";
 import { DefaultTagID } from "../../stores/room-list/models";
@@ -109,7 +110,7 @@ interface IProps {
     forceTimeline?: boolean; // see props on MatrixChat
 }
 
-interface IState {
+export interface LoggedInViewIState {
     syncErrorData?: SyncStateData;
     usageLimitDismissed: boolean;
     usageLimitEventContent?: IUsageLimit;
@@ -117,6 +118,7 @@ interface IState {
     useCompactLayout: boolean;
     activeCalls: Array<MatrixCall>;
     backgroundImage?: string;
+    enterRoomTochat?: boolean;
 }
 
 /**
@@ -128,7 +130,7 @@ interface IState {
  *
  * Components mounted below us can access the matrix client via the react context.
  */
-class LoggedInView extends React.Component<IProps, IState> {
+class LoggedInView extends React.Component<IProps, LoggedInViewIState> {
     public static displayName = "LoggedInView";
 
     protected readonly _matrixClient: MatrixClient;
@@ -149,6 +151,7 @@ class LoggedInView extends React.Component<IProps, IState> {
             useCompactLayout: SettingsStore.getValue("useCompactLayout"),
             usageLimitDismissed: false,
             activeCalls: LegacyCallHandler.instance.getAllActiveCalls(),
+            enterRoomTochat: false,
         };
 
         // stash the MatrixClient in case we log out before we are unmounted
@@ -324,7 +327,10 @@ class LoggedInView extends React.Component<IProps, IState> {
         });
     };
 
-    private calculateServerLimitToast(syncError: IState["syncErrorData"], usageLimitEventContent?: IUsageLimit): void {
+    private calculateServerLimitToast(
+        syncError: LoggedInViewIState["syncErrorData"],
+        usageLimitEventContent?: IUsageLimit,
+    ): void {
         const error = (syncError?.error as MatrixError)?.errcode === "M_RESOURCE_LIMIT_EXCEEDED";
         if (error) {
             usageLimitEventContent = (syncError?.error as MatrixError).data as IUsageLimit;
@@ -665,6 +671,7 @@ class LoggedInView extends React.Component<IProps, IState> {
         const bodyClasses = classNames({
             "mx_MatrixChat": true,
             "mx_MatrixChat--with-avatar": this.state.backgroundImage,
+            "mx_enterMatrixChatRoom": this.state.enterRoomTochat,
         });
 
         const audioFeedArraysForCalls = this.state.activeCalls.map((call) => {
@@ -673,40 +680,44 @@ class LoggedInView extends React.Component<IProps, IState> {
 
         return (
             <MatrixClientContext.Provider value={this._matrixClient}>
-                <div
-                    onPaste={this.onPaste}
-                    onKeyDown={this.onReactKeyDown}
-                    className={wrapperClasses}
-                    aria-hidden={this.props.hideToSRUsers}
+                <MatrixChatRouteContext.Provider
+                    value={{ loggedInViewState: this.state, loggedInViewSetState: this.setState.bind(this) }}
                 >
-                    <ToastContainer />
-                    <div className={bodyClasses}>
-                        <div className="mx_LeftPanel_outerWrapper">
-                            <LeftPanelLiveShareWarning isMinimized={this.props.collapseLhs || false} />
-                            <div className="mx_LeftPanel_wrapper">
-                                <BackdropPanel blurMultiplier={0.5} backgroundImage={this.state.backgroundImage} />
-                                <SpacePanel />
-                                <BackdropPanel backgroundImage={this.state.backgroundImage} />
-                                <div
-                                    className="mx_LeftPanel_wrapper--user"
-                                    ref={this._resizeContainer}
-                                    data-collapsed={this.props.collapseLhs ? true : undefined}
-                                >
-                                    <LeftPanel
-                                        pageType={this.props.page_type as PageTypes}
-                                        isMinimized={this.props.collapseLhs || false}
-                                        resizeNotifier={this.props.resizeNotifier}
-                                    />
+                    <div
+                        onPaste={this.onPaste}
+                        onKeyDown={this.onReactKeyDown}
+                        className={wrapperClasses}
+                        aria-hidden={this.props.hideToSRUsers}
+                    >
+                        <ToastContainer />
+                        <div className={bodyClasses}>
+                            <div className="mx_LeftPanel_outerWrapper">
+                                <LeftPanelLiveShareWarning isMinimized={this.props.collapseLhs || false} />
+                                <div className="mx_LeftPanel_wrapper">
+                                    <BackdropPanel blurMultiplier={0.5} backgroundImage={this.state.backgroundImage} />
+                                    <SpacePanel />
+                                    <BackdropPanel backgroundImage={this.state.backgroundImage} />
+                                    <div
+                                        className="mx_LeftPanel_wrapper--user"
+                                        ref={this._resizeContainer}
+                                        data-collapsed={this.props.collapseLhs ? true : undefined}
+                                    >
+                                        <LeftPanel
+                                            pageType={this.props.page_type as PageTypes}
+                                            isMinimized={this.props.collapseLhs || false}
+                                            resizeNotifier={this.props.resizeNotifier}
+                                        />
+                                    </div>
                                 </div>
                             </div>
+                            {/* <ResizeHandle passRef={this.resizeHandler} id="lp-resizer" /> */}
+                            <div className="mx_RoomView_wrapper">{pageElement}</div>
                         </div>
-                        <ResizeHandle passRef={this.resizeHandler} id="lp-resizer" />
-                        <div className="mx_RoomView_wrapper">{pageElement}</div>
                     </div>
-                </div>
-                <PipContainer />
-                <NonUrgentToastContainer />
-                {audioFeedArraysForCalls}
+                    <PipContainer />
+                    <NonUrgentToastContainer />
+                    {audioFeedArraysForCalls}
+                </MatrixChatRouteContext.Provider>
             </MatrixClientContext.Provider>
         );
     }

@@ -28,6 +28,7 @@ import SettingsStore from "../../../settings/SettingsStore";
 import AccessibleButton, { ButtonEvent } from "../../views/elements/AccessibleButton";
 import Heading from "../../views/typography/Heading";
 import { showUserOnboardingPage } from "./UserOnboardingPage";
+import { EnterChatButton } from "../elements/TransformButton";
 
 interface Props {
     selected: boolean;
@@ -73,9 +74,13 @@ function UserOnboardingButtonInternal({ selected, minimized }: Props): JSX.Eleme
             {!minimized && (
                 <>
                     <div className="mx_UserOnboardingButton_content">
-                        <Heading size="4" className="mx_Heading_h4">
-                            {_t("common|welcome")}
-                        </Heading>
+                        <div className="mx_Heading_h4_welcome_waper">
+                            <EnterChatButton>
+                                <Heading size="4" className="mx_Heading_h4">
+                                    {_t("common|welcome")}
+                                </Heading>
+                            </EnterChatButton>
+                        </div>
                         <AccessibleButton className="mx_UserOnboardingButton_close" onClick={onDismiss} />
                     </div>
                 </>

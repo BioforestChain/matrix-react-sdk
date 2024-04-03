@@ -34,7 +34,7 @@ import E2EIcon from "./E2EIcon";
 import DecoratedRoomAvatar from "../avatars/DecoratedRoomAvatar";
 import AccessibleButton, { ButtonEvent } from "../elements/AccessibleButton";
 import AccessibleTooltipButton from "../elements/AccessibleTooltipButton";
-import RoomTopic from "../elements/RoomTopic";
+// import RoomTopic from "../elements/RoomTopic";
 import RoomName from "../elements/RoomName";
 import { E2EStatus } from "../../../utils/ShieldUtils";
 import { IOOBData } from "../../../stores/ThreepidInviteStore";
@@ -72,6 +72,7 @@ import { Alignment } from "../elements/Tooltip";
 import RoomCallBanner from "../beacon/RoomCallBanner";
 import { shouldShowComponent } from "../../../customisations/helpers/UIComponents";
 import { UIComponent } from "../../../settings/UIFeature";
+import { BackButton } from "../elements/TransformButton";
 
 class DisabledWithReason {
     public constructor(public readonly reason: string) {}
@@ -834,8 +835,7 @@ export default class RoomHeader extends React.Component<IProps, IState> {
             );
         }
 
-        const topicElement = <RoomTopic room={this.props.room} className="mx_LegacyRoomHeader_topic" />;
-
+        // const topicElement = <RoomTopic room={this.props.room} className="mx_LegacyRoomHeader_topic" />;
         const viewLabs = (): void =>
             defaultDispatcher.dispatch({
                 action: Action.ViewUserSettings,
@@ -851,11 +851,12 @@ export default class RoomHeader extends React.Component<IProps, IState> {
                     className="mx_LegacyRoomHeader_wrapper"
                     aria-owns={this.state.rightPanelOpen ? "mx_RightPanel" : undefined}
                 >
+                    <BackButton isLegacyRoomHeaderBackButon={true} />
                     <div className="mx_LegacyRoomHeader_avatar">{roomAvatar}</div>
                     {icon}
                     {name}
                     {searchStatus}
-                    {topicElement}
+                    {/* {topicElement} */}
                     {betaPill}
                     {buttons}
                 </div>

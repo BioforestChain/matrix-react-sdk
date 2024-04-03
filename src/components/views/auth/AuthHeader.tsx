@@ -17,7 +17,7 @@ limitations under the License.
 
 import React from "react";
 
-import AuthHeaderLogo from "./AuthHeaderLogo";
+// import AuthHeaderLogo from "./AuthHeaderLogo";
 import LanguageSelector from "./LanguageSelector";
 
 interface IProps {
@@ -28,7 +28,7 @@ export default class AuthHeader extends React.Component<IProps> {
     public render(): React.ReactNode {
         return (
             <div className="mx_AuthHeader">
-                <AuthHeaderLogo />
+                {/* <AuthHeaderLogo /> */}
                 <LanguageSelector disabled={this.props.disableLanguageSelector} />
             </div>
         );

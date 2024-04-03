@@ -23,6 +23,7 @@ import SdkConfig from "../../../SdkConfig";
 import { UseCase } from "../../../settings/enums/UseCase";
 import AccessibleButton, { ButtonEvent } from "../../views/elements/AccessibleButton";
 import Heading from "../../views/typography/Heading";
+import { BackButton } from "../elements/TransformButton";
 
 const onClickSendDm = (ev: ButtonEvent): void => {
     PosthogTrackers.trackInteraction("WebUserOnboardingHeaderSendDm", ev);
@@ -81,6 +82,9 @@ export function UserOnboardingHeader({ useCase }: Props): JSX.Element {
                 <AccessibleButton onClick={onClickSendDm} kind="primary">
                     {actionLabel}
                 </AccessibleButton>
+                <div className="mx_AccessibleReturnButton">
+                    <BackButton isLegacyRoomHeaderBackButon={false}>{_t("action|back")}</BackButton>
+                </div>
             </div>
             <img className="mx_UserOnboardingHeader_image" src={image} alt="" />
         </div>

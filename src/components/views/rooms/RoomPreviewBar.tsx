@@ -42,6 +42,7 @@ import { UIFeature } from "../../../settings/UIFeature";
 import { ModuleRunner } from "../../../modules/ModuleRunner";
 import { Icon as AskToJoinIcon } from "../../../../res/img/element-icons/ask-to-join.svg";
 import Field from "../elements/Field";
+import { BackButton } from "../elements/TransformButton";
 
 const MemberEventHtmlReasonField = "io.element.html_reason";
 
@@ -710,12 +711,16 @@ export default class RoomPreviewBar extends React.Component<IProps, IState> {
                 {secondaryButton}
                 {extraComponents}
                 {primaryButton}
+                <div className="mx_AccessibleReturnButton">
+                    <BackButton isLegacyRoomHeaderBackButon={false}>{_t("action|back")}</BackButton>
+                </div>
             </>
         ) : (
             <>
                 {primaryButton}
                 {extraComponents}
                 {secondaryButton}
+                <BackButton isLegacyRoomHeaderBackButon={false}>{_t("action|back")}</BackButton>
             </>
         );
 

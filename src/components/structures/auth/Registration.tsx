@@ -241,7 +241,10 @@ export default class Registration extends React.Component<IProps, IState> {
         try {
             const loginFlows = await this.loginLogic.getFlows(true);
             if (serverConfig !== this.latestServerConfig) return; // discard, serverConfig changed from under us
-            ssoFlow = loginFlows.find((f) => f.type === "m.login.sso" || f.type === "m.login.cas") as SSOFlow;
+            
+            // ssoFlow = loginFlows.find((f) => f.type === "m.login.sso" || f.type === "m.login.cas") as SSOFlow;
+            ssoFlow = undefined;
+            
             oidcNativeFlow = loginFlows.find((f) => f.type === "oidcNativeFlow") as OidcNativeFlow;
         } catch (e) {
             if (serverConfig !== this.latestServerConfig) return; // discard, serverConfig changed from under us

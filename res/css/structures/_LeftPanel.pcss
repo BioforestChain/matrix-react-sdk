@@ -22,9 +22,10 @@ limitations under the License.
 }
 
 .mx_LeftPanel_outerWrapper {
+    width: 100vw;
     display: flex;
     flex-direction: column;
-    max-width: 50%;
+    /* max-width: 50%; */
     position: relative;
 
     /* Contain the amount of layers rendered by constraining what actually needs re-layering via css */
@@ -43,6 +44,7 @@ limitations under the License.
     height: 100%; /* ensure space panel is still scrollable with an outer wrapper */
 
     .mx_LeftPanel_wrapper--user {
+        width: 100%;
         background-color: $roomlist-bg-color;
         display: flex;
         overflow: hidden;

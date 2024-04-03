@@ -21,7 +21,8 @@ import { SSOFlow, SSOAction } from "matrix-js-sdk/src/matrix";
 
 import { _t, UserFriendlyError } from "../../../languageHandler";
 import Login, { ClientLoginFlow, OidcNativeFlow } from "../../../Login";
-import { messageForConnectionError, messageForLoginError } from "../../../utils/ErrorUtils";
+// import { messageForConnectionError, messageForLoginError } from "../../../utils/ErrorUtils";
+import { messageForLoginError } from "../../../utils/ErrorUtils";
 import AutoDiscoveryUtils from "../../../utils/AutoDiscoveryUtils";
 import AuthPage from "../../views/auth/AuthPage";
 import PlatformPeg from "../../../PlatformPeg";
@@ -40,6 +41,7 @@ import { ValidatedServerConfig } from "../../../utils/ValidatedServerConfig";
 import { filterBoolean } from "../../../utils/arrays";
 import { Features } from "../../../settings/Settings";
 import { startOidcLogin } from "../../../utils/oidc/authorize";
+import WalletLogin from "../../views/auth/WalletLogin";
 
 interface IProps {
     serverConfig: ValidatedServerConfig;
@@ -131,6 +133,7 @@ export default class LoginComponent extends React.PureComponent<IProps, IState> 
         // letting you do that login type
         this.stepRendererMap = {
             "m.login.password": this.renderPasswordStep,
+            "m.login.wallet": this.renderWalletStep,
 
             // CAS and SSO are the same thing, modulo the url we link to
             // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -218,6 +221,65 @@ export default class LoginComponent extends React.PureComponent<IProps, IState> 
                 } else {
                     errorText = messageForLoginError(error, this.props.serverConfig);
                 }
+
+                this.setState({
+                    busy: false,
+                    busyLoggingIn: false,
+                    errorText,
+                    // 401 would be the sensible status code for 'incorrect password'
+                    // but the login API gives a 403 https://matrix.org/jira/browse/SYN-744
+                    // mentions this (although the bug is for UI auth which is not this)
+                    // We treat both as an incorrect password
+                    loginIncorrect: error.httpStatus === 401 || error.httpStatus === 403,
+                });
+            },
+        );
+    };
+
+    public onWalletLogin = async (): Promise<void> => {
+        if (!this.state.serverIsAlive) {
+            this.setState({ busy: true });
+            // Do a quick liveliness check on the URLs
+            let aliveAgain = true;
+            try {
+                await AutoDiscoveryUtils.validateServerConfigWithStaticUrls(
+                    this.props.serverConfig.hsUrl,
+                    this.props.serverConfig.isUrl,
+                );
+                this.setState({ serverIsAlive: true, errorText: "" });
+            } catch (e) {
+                const componentState = AutoDiscoveryUtils.authComponentStateForError(e);
+                this.setState({
+                    busy: false,
+                    busyLoggingIn: false,
+                    ...componentState,
+                });
+                aliveAgain = !componentState.serverErrorIsFatal;
+            }
+
+            // Prevent people from submitting their password when something isn't right.
+            if (!aliveAgain) {
+                return;
+            }
+        }
+
+        this.setState({
+            busy: true,
+            busyLoggingIn: true,
+            errorText: null,
+            loginIncorrect: false,
+        });
+
+        this.loginLogic.loginViaWallet().then(
+            (data) => {
+                this.setState({ serverIsAlive: true }); // it must be, we logged in.
+                this.props.onLoggedIn(data, "");
+            },
+            (error) => {
+                if (this.unmounted) return;
+
+                // Some error strings only apply for logging in
+                const errorText = messageForLoginError(error, this.props.serverConfig);
 
                 this.setState({
                     busy: false,
@@ -375,53 +437,59 @@ export default class LoginComponent extends React.PureComponent<IProps, IState> 
         });
         this.loginLogic = loginLogic;
 
-        loginLogic
-            .getFlows()
-            .then(
-                (flows) => {
-                    // look for a flow where we understand all of the steps.
-                    const supportedFlows = flows.filter(this.isSupportedFlow);
+        // loginLogic
+        //     .getFlows()
+        //     .then(
+        //         (flows) => {
+        //             // look for a flow where we understand all of the steps.
+        //             const supportedFlows = flows.filter(this.isSupportedFlow);
 
-                    this.setState({
-                        flows: supportedFlows,
-                    });
+        //             this.setState({
+        //                 flows: supportedFlows,
+        //             });
 
-                    if (supportedFlows.length === 0) {
-                        this.setState({
-                            errorText: _t("auth|unsupported_auth"),
-                        });
-                    }
-                },
-                (err) => {
-                    this.setState({
-                        errorText: messageForConnectionError(err, this.props.serverConfig),
-                        loginIncorrect: false,
-                        canTryLogin: false,
-                    });
-                },
-            )
-            .finally(() => {
-                this.setState({
-                    busy: false,
-                });
-            });
+        //             if (supportedFlows.length === 0) {
+        //                 this.setState({
+        //                     errorText: _t("auth|unsupported_auth"),
+        //                 });
+        //             }
+        //         },
+        //         (err) => {
+        //             this.setState({
+        //                 errorText: messageForConnectionError(err, this.props.serverConfig),
+        //                 loginIncorrect: false,
+        //                 canTryLogin: false,
+        //             });
+        //         },
+        //     )
+        //     .finally(() => {
+        //         this.setState({
+        //             busy: false,
+        //         });
+        //     });
+
+        this.setState({
+            flows: [{ type: "m.login.wallet" }],
+            busy: false,
+        });
     }
 
-    private isSupportedFlow = (flow: ClientLoginFlow): boolean => {
-        // technically the flow can have multiple steps, but no one does this
-        // for login and loginLogic doesn't support it so we can ignore it.
-        if (!this.stepRendererMap[flow.type]) {
-            logger.log("Skipping flow", flow, "due to unsupported login type", flow.type);
-            return false;
-        }
-        return true;
-    };
+    // private isSupportedFlow = (flow: ClientLoginFlow): boolean => {
+    //     // technically the flow can have multiple steps, but no one does this
+    //     // for login and loginLogic doesn't support it so we can ignore it.
+    //     if (!this.stepRendererMap[flow.type]) {
+    //         logger.log("Skipping flow", flow, "due to unsupported login type", flow.type);
+    //         return false;
+    //     }
+    //     return true;
+    // };
 
     public renderLoginComponentForFlows(): ReactNode {
         if (!this.state.flows) return null;
 
         // this is the ideal order we want to show the flows in
-        const order = ["oidcNativeFlow", "m.login.password", "m.login.sso"];
+        // const order = ["oidcNativeFlow", "m.login.password", "m.login.sso"];
+        const order = ["m.login.wallet"];
 
         const flows = filterBoolean(order.map((type) => this.state.flows?.find((flow) => flow.type === type)));
         return (
@@ -448,6 +516,16 @@ export default class LoginComponent extends React.PureComponent<IProps, IState> 
                 onForgotPasswordClick={this.props.onForgotPasswordClick}
                 loginIncorrect={this.state.loginIncorrect}
                 serverConfig={this.props.serverConfig}
+                disableSubmit={this.isBusy()}
+                busy={this.props.isSyncing || this.state.busyLoggingIn}
+            />
+        );
+    };
+    private renderWalletStep = (): JSX.Element => {
+        return (
+            <WalletLogin
+                onSubmit={this.onWalletLogin}
+                loginIncorrect={this.state.loginIncorrect}
                 disableSubmit={this.isBusy()}
                 busy={this.props.isSyncing || this.state.busyLoggingIn}
             />

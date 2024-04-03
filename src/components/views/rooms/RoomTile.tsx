@@ -53,6 +53,7 @@ import { shouldShowComponent } from "../../../customisations/helpers/UIComponent
 import { UIComponent } from "../../../settings/UIFeature";
 import { isKnockDenied } from "../../../utils/membership";
 import SettingsStore from "../../../settings/SettingsStore";
+import { EnterChatButton } from "../elements/TransformButton";
 
 interface Props {
     room: Room;
@@ -429,10 +430,12 @@ export class RoomTile extends React.PureComponent<ClassProps, State> {
 
         const titleContainer = this.props.isMinimized ? null : (
             <div className="mx_RoomTile_titleContainer">
-                <div title={name} className={titleClasses} tabIndex={-1}>
-                    <span dir="auto">{name}</span>
-                </div>
-                {subtitle}
+                <EnterChatButton>
+                    <div title={name} className={titleClasses} tabIndex={-1}>
+                        <span dir="auto">{name}</span>
+                    </div>
+                    {subtitle}
+                </EnterChatButton>
             </div>
         );
 

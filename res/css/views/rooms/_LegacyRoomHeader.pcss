@@ -57,7 +57,7 @@ limitations under the License.
     min-width: 0;
     padding: 10px 20px 9px 16px;
     border-bottom: 1px solid $separator;
-
+    justify-content: end;
     .mx_InviteOnlyIcon_large {
         margin: 0;
     }
@@ -66,9 +66,34 @@ limitations under the License.
         margin-right: $spacing-8;
     }
 }
+.mx_LegacyRoomHeader_backButon {
+    margin-right: 10px;
+    position: relative;
+    display: block;
+    height: 38px;
+    width: 52px;
+    border-radius: 12px;
+    box-sizing: border-box;
+    background: $background;
+    border: 1.3px solid $muted-fg-color;
+    cursor: pointer;
+}
+
+.mx_LegacyRoomHeader_backButon::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    mask-image: url("$(res)/img/element-icons/message/chevron-up.svg");
+    mask-repeat: no-repeat;
+    mask-size: 20px;
+    mask-position: center 6px;
+    transform: rotate(270deg);
+    background: $muted-fg-color;
+}
 
 .mx_LegacyRoomHeader_name {
-    flex: 0 1 auto;
+    flex: 1;
+    /* flex: 0 1 auto; */
     overflow: hidden;
     color: $primary-content;
     font: var(--cpd-font-heading-sm-semibold);

@@ -203,6 +203,32 @@ export default class Login {
                 throw error;
             });
     }
+
+    public loginViaWallet(): Promise<IMatrixClientCreds> {
+        const tryFallbackHs = (originalError: Error): Promise<IMatrixClientCreds> => {
+            return sendWalletLoginRequest(this.fallbackHsUrl!, this.isUrl).catch((fallbackError) => {
+                logger.log("fallback HS login failed", fallbackError);
+                // throw the original error
+                throw originalError;
+            });
+        };
+
+        let originalLoginError: Error | null = null;
+        return sendWalletLoginRequest(this.hsUrl, this.isUrl)
+            .catch((error) => {
+                originalLoginError = error;
+                if (error.httpStatus === 403) {
+                    if (this.fallbackHsUrl) {
+                        return tryFallbackHs(originalLoginError!);
+                    }
+                }
+                throw originalLoginError;
+            })
+            .catch((error) => {
+                logger.log("Login failed", error);
+                throw error;
+            });
+    }
 }
 
 /**
@@ -292,6 +318,67 @@ export async function sendLoginRequest(
     };
 
     SecurityCustomisations.examineLoginResponse?.(data, creds);
+
+    return creds;
+}
+
+/**
+ * Send a login request to wallet and server, and format the response
+ * as a MatrixClientCreds
+ *
+ * @param {string} hsUrl   the base url of the Homeserver used to log in.
+ * @param {string} isUrl   the base url of the default identity server
+ *
+ * @returns {IMatrixClientCreds}
+ */
+export async function sendWalletLoginRequest(hsUrl: string, isUrl: string | undefined): Promise<IMatrixClientCreds> {
+    // const client = createClient({
+    //     baseUrl: hsUrl,
+    //     idBaseUrl: isUrl,
+    // });
+
+    // const data = await client.loginByWallet();
+
+    // const wellknown = data.well_known;
+    // if (wellknown) {
+    //     if (wellknown["m.homeserver"]?.["base_url"]) {
+    //         hsUrl = wellknown["m.homeserver"]["base_url"];
+    //         logger.log(`Overrode homeserver setting with ${hsUrl} from login response`);
+    //     }
+    //     if (wellknown["m.identity_server"]?.["base_url"]) {
+    //         // TODO: should we prompt here?
+    //         isUrl = wellknown["m.identity_server"]["base_url"];
+    //         logger.log(`Overrode IS setting with ${isUrl} from login response`);
+    //     }
+    // }
+
+    // const creds: IMatrixClientCreds = {
+    //     homeserverUrl: hsUrl,
+    //     identityServerUrl: isUrl,
+    //     userId: data.user_id,
+    //     deviceId: data.device_id,
+    //     accessToken: data.access_token,
+    // };
+
+    const creds:IMatrixClientCreds = {
+        homeserverUrl: hsUrl,
+        identityServerUrl: isUrl,
+        userId: "@befn1710470503658:172.30.95.85",
+        // walletAddress: "bHJLybbp6piJWcpFNg7C3wsPRyTz1VcjUV",
+        accessToken: "syt_YmVmbjE3MTA0NzA1MDM2NTg_CfeMWfBdcKZAHbORfAZK_1aWmge",
+        deviceId: "BQRSPLFSVX"
+    }
+    
+    // const creds:IMatrixClientCreds = {
+    //     homeserverUrl: hsUrl,
+    //     identityServerUrl: isUrl,
+    //     userId: "@kevinwen001:172.30.95.85",
+    //     // walletAddress: "bHJLybbp6piJWcpFNg7C3wsPRyTz1VcjUV",
+    //     accessToken: "syt_a2V2aW53ZW4wMDE_rGHiNMEFdqGFZEjGeBSq_3V1SE3",
+    //     deviceId: "YBBUBKGNPT"
+    // }
+
+    // SecurityCustomisations.examineLoginResponse?.(data, creds);
 
     return creds;
 }
